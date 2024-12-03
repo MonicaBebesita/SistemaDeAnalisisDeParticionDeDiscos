@@ -284,7 +284,7 @@ void print_mbr_partition_table(mbr *boot_record) {
         return;
     }
 
-     printf("Tabla de particiones MBR:\n");
+    printf("Tabla de particiones MBR:\n");
     printf("-----------------------------------------------------------------------------------------------------------------------\n");
     printf("|    Boot    |   CHS INICIO   |    CHS FIN    |           Tipo           |  Inicio LBA  |    Fin LBA    | Tamaño (MB) |\n");
     printf("------------------------------------------------------------------------------------------------------------------------\n");

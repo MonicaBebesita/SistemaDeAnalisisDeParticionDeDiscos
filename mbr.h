@@ -58,7 +58,7 @@
  */
 typedef struct {
 	/* La suma completa de bytes de esta estructura debe ser 16 */
- unsigned char boot_flag;        // 1 byte: Indicador de arranque (0x80 o 0x00).
+ 	unsigned char boot_flag;        // 1 byte: Indicador de arranque (0x80 o 0x00).
     unsigned char chs_start[3];     // 3 bytes: Dirección CHS de inicio.
     unsigned char partition_type;   // 1 byte: Tipo de partición (e.g., 0x07 para NTFS).
     unsigned char chs_end[3];       // 3 bytes: Dirección CHS de fin.

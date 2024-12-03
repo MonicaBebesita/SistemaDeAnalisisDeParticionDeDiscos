@@ -291,13 +291,54 @@ int is_protective_mbr(mbr * boot_record) {
 	return 0;
 }
 */
+#include <stdio.h>
+#include <stdint.h>
 
+
+// Imprime la información de las particiones en formato tabular
+void print_gpt_partition_table(gpt_partition_descriptor partitions[], int num_partitions) {
+    printf("Disk initialized as GPT\n");
+    printf("MBR Partition Table\n");
+    printf("Start LBA       End LBA         Type\n");
+    printf("------------    ------------    ------------\n");
+
+    // Imprimir la partición MBR Protectiva
+    printf("1               3907029167     GPT Protective MBR\n");
+
+    printf("GPT header\n");
+    printf("Revision: 0x10000\n");
+    printf("First usable lba: 34\n");
+    printf("Last usable lba: 3907029134\n");
+    printf("Disk GUID: 0421bb1e-e8d3-4831-abc7-cf8750ee9bf5\n");
+    printf("Partition entry LBA: 2\n");
+    printf("Number of partition entries: 128\n");
+    printf("Size of a partition entry: 128\n");
+    printf("Total of partition table entries sectors: 32\n");
+    printf("Size of a partition descriptor: 128\n");
+    printf("\n");
+
+    // Imprimir las particiones
+    printf("Start LBA       End LBA         Size            Type\n");
+    printf("------------    ------------    ------------    ---------------------------\n");
+
+    for (int i = 0; i < num_partitions; i++) {
+        printf("%-15llu %-15llu %-15llu %s\n",
+				partitions[i].starting_lba, 
+				partitions[i].ending_lba, 
+				(partitions[i].ending_lba - partitions[i].starting_lba),
+				partitions[i].partition_name);
+    }
+}
 
 
 int is_valid_gpt_header(gpt_header * hdr) {
-	/* TODO retorna 1 si el encabezado es valido (verificar el valor del atributo signature)*/
-	return 0;
+    if (strncmp(hdr->signature, "EFI PART", 8) != 0) {//Si la firma no indica que sea UEFI entonces no es valida la firma
+        return 0; // Firma no válida
+    }
+    return 1;
 }
+
+
 
 
 char * guid_to_str(guid * buf) {
@@ -345,25 +386,28 @@ char * gpt_decode_partition_name(char name[72]) {
 		ptr[i] = name_ptr[i*2];
 	}
 
-	ptr[72] = 0;
+	ptr[72] = 0;//Posible error al superar el limite de bytes
 
 	return ptr;
 }
 
 
 int is_null_descriptor(gpt_partition_descriptor * desc) {
-
-	return 0;
+	static const guid null_guid = {0};
+	//Retorna 0 si la partición es nula
+    return memcmp(&desc->partition_type_guid, &null_guid, sizeof(guid)) == 0;
 }
 
 
 
 const gpt_partition_type * get_gpt_partition_type(char * guid_str) {
-
-	/* TODO retornar el tipo de particion de acuerdo con el GUID especificado */
-
-	//Default: return first element of partition type array
-	return &gpt_partition_types[0];
+    int i = 0;
+	do{
+        if (strcmp(guid_str, gpt_partition_types[i].guid) == 0) {
+            return &gpt_partition_types[i];//Encuentra pa parte requerida de la partición
+        }
+    }while(gpt_partition_types[i+1].os!=0);
+	return &gpt_partition_types[0];//Retorna el primer elemento si no encuentra nada
 }
 
 

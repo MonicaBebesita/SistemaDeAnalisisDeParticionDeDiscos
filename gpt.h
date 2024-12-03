@@ -2,6 +2,7 @@
  * @file gpt.h
  * @author 
  * Erwin Meza Vega <emezav@unicauca.edu.co>
+ * Julián Alejandro Muñoz Pérez <julianalejom@unicauca.edu.co>
  * @brief Definiciones para discos inicializados con esquema GPT (GUID Partition Table).
  * 
  * Este archivo contiene las definiciones de estructuras, constantes y funciones necesarias
@@ -37,15 +38,13 @@
  * Identificador único espacial (6 bytes).
  */
 typedef struct {
-	  unsigned int time_lo;                   ///< Campo bajo del timestamp.
+	unsigned int time_lo;                   ///< Campo bajo del timestamp.
     unsigned short time_mid;                ///< Campo medio del timestamp.
     unsigned short time_hi_and_version;     ///< Campo alto del timestamp y versión.
     unsigned char clock_seq_hi_and_reserved;///< Campo alto de la secuencia de reloj.
     unsigned char clock_seq_lo;             ///< Campo bajo de la secuencia de reloj.
     unsigned char node[6];                  ///< Identificador único espacial.
 }__attribute__((packed))guid;
-
-
 
 
 /**
@@ -57,8 +56,24 @@ typedef struct {
 
  */
 typedef struct {
-	/* TODO definir los atributos del encabezado de la tabla GPT */
-}__attribute__((packed)) gpt_header;
+    unsigned char signature[8];                  ///< Firma GPT: "EFI PART" (8 bytes)
+    unsigned short revision;                      ///< Versión (0x00010000 para GPT v1.0)
+    unsigned short header_size;                   ///< Tamaño del encabezado GPT (generalmente 92 bytes)
+    unsigned short header_crc32;                  ///< CRC32 del encabezado
+    unsigned short reserved;                      ///< Reservado, debe ser 0
+    unsigned long long current_lba;               ///< LBA del encabezado GPT actual
+    unsigned long long backup_lba;                ///< LBA del encabezado GPT de respaldo
+    unsigned long long first_usable_lba;          ///< Primer LBA usable (generalmente 34)
+    unsigned long long last_usable_lba;           ///< Último LBA usable
+    guid partition_entry_type_guid;               ///< GUID de tipo de partición (comúnmente "8DA63203-7B5A-4F9F-B21B-5F8B2D6B920E")
+    unsigned long long partition_entries_lba;     ///< LBA de la tabla de particiones (comienza en LBA 2)
+    unsigned int num_partition_entries;           ///< Número de entradas de partición
+    unsigned int partition_entry_size;            ///< Tamaño de cada descriptor de partición
+    unsigned short partition_entry_array_crc32;   ///< CRC32 de la tabla de particiones
+    unsigned short reserved2;                     ///< Reservado
+} __attribute__((packed)) gpt_header;
+
+
 
 
 
@@ -70,9 +85,21 @@ typedef struct {
  * Cada entrada describe una partición en el disco.
  */
 typedef struct {
-	/* TODO definir los atributos de un descriptor de particion GPT */
-}__attribute__((packed)) gpt_partition_descriptor;
+    guid partition_type_guid;             ///< GUID que identifica el tipo de partición (por ejemplo, "4F68BCE3-E8CD-4A90-A3A2-3B7B05A8A98B" para una partición de datos)
+    guid unique_partition_guid;           ///< GUID único para la partición (diferente para cada partición)
+    unsigned long long starting_lba;      ///< LBA de inicio de la partición
+    unsigned long long ending_lba;        ///< LBA final de la partición
+    unsigned long long attributes;        ///< Atributos de la partición (flags, como si es de arranque o no)
+    char partition_name[72];              ///< Nombre de la partición (en formato Unicode, 72 caracteres)
+} __attribute__((packed)) gpt_partition_descriptor;
 
+
+/**
+ * @brief imprime la tabla de particiones de gpt
+ * @param partitions vector que describe los elementos importantes del descriptor de particiones de gpt
+ * @param num_paritions es el numero de particiones de gpt encontradas
+ */
+void print_gpt_partition_table(gpt_partition_descriptor partitions[], int num_partitions);
 
 
 /**
