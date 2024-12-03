@@ -285,13 +285,13 @@ const gpt_partition_type gpt_partition_types[] = {
 	{0, 0, 0}
 };
 
-
+/*
 int is_protective_mbr(mbr * boot_record) {
-	/* TODO verificar si el MBR es un MBR de proteccion */
-	/* Retorna 1 si el boot record tiene una tabla de particiones
-	con solo una partición definida, de tipo GPT Protective MBR (0xEE) */
+	//Esta en mbr.h //TO Elim
 	return 0;
 }
+*/
+
 
 
 int is_valid_gpt_header(gpt_header * hdr) {
