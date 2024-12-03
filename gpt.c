@@ -293,10 +293,8 @@ int is_protective_mbr(mbr * boot_record) {
 */
 #include <stdio.h>
 #include <stdint.h>
-
-
 // Imprime la información de las particiones en formato tabular
-void print_gpt_partition_table(gpt_partition_descriptor partitions[], int num_partitions) {
+void print_gpt_partition_table(gpt_header *hdr, gpt_partition_descriptor partitions[], int num_partitions) {
     printf("Disk initialized as GPT\n");
     printf("MBR Partition Table\n");
     printf("Start LBA       End LBA         Type\n");
@@ -305,40 +303,67 @@ void print_gpt_partition_table(gpt_partition_descriptor partitions[], int num_pa
     // Imprimir la partición MBR Protectiva
     printf("1               3907029167     GPT Protective MBR\n");
 
+    // Imprimir detalles del encabezado GPT (hdr)
     printf("GPT header\n");
-    printf("Revision: 0x10000\n");
-    printf("First usable lba: 34\n");
-    printf("Last usable lba: 3907029134\n");
-    printf("Disk GUID: 0421bb1e-e8d3-4831-abc7-cf8750ee9bf5\n");
-    printf("Partition entry LBA: 2\n");
-    printf("Number of partition entries: 128\n");
-    printf("Size of a partition entry: 128\n");
-    printf("Total of partition table entries sectors: 32\n");
-    printf("Size of a partition descriptor: 128\n");
+    printf("Revision: 0x%04x\n", hdr->revision); // Imprimir la versión dinámica
+    printf("First usable lba: %llu\n", hdr->first_usable_lba); // Usar el valor dinámico
+    printf("Last usable lba: %llu\n", hdr->last_usable_lba); // Usar el valor dinámico
+    printf("Disk GUID: ");
+    char *disk_guid = guid_to_str(&hdr->partition_entry_type_guid); // Suponiendo que tienes una función para convertir el GUID a string
+    printf("%s\n", disk_guid);
+    free(disk_guid); // Liberar la memoria
+
+    printf("Partition entry LBA: %llu\n", hdr->partition_entries_lba); // LBA dinámico
+    printf("Number of partition entries: %d\n", hdr->num_partition_entries); // Número dinámico de entradas
+    printf("Size of a partition entry: %d\n", hdr->partition_entry_size); // Tamaño dinámico de entrada
+    printf("Total of partition table entries sectors: %d\n", hdr->num_partition_entries * hdr->partition_entry_size / 512); // Total calculado
+    printf("Size of a partition descriptor: %d\n", sizeof(gpt_partition_descriptor)); // Tamaño calculado de descriptor
     printf("\n");
 
     // Imprimir las particiones
-    printf("Start LBA       End LBA         Size            Type\n");
-    printf("------------    ------------    ------------    ---------------------------\n");
+    printf("Start LBA       End LBA         Size            Type                    		Partition name\n");
+    printf("------------    ------------    ------------    ---------------------------		--------------------\n");
 
+    // Imprimir las particiones
     for (int i = 0; i < num_partitions; i++) {
-        printf("%-15llu %-15llu %-15llu %s\n",
-				partitions[i].starting_lba, 
-				partitions[i].ending_lba, 
-				(partitions[i].ending_lba - partitions[i].starting_lba),
-				partitions[i].partition_name);
+
+        // Convertir el GUID de tipo de partición a cadena
+        char *guid_str = guid_to_str(&partitions[i].partition_type_guid);
+
+        // Obtener la descripción del tipo de partición a partir del GUID
+        const gpt_partition_type *partition_type = get_gpt_partition_type(guid_str);
+
+        // Si no se encuentra el tipo de partición, asignar un valor por defecto
+        const char *partition_type_description = partition_type ? partition_type->description : "Unknown Type";
+
+        // Convertir LBA a cadenas
+        char starting_lba_str[20]; // Array de 20 caracteres para almacenar el valor como cadena
+        char ending_lba_str[20];
+
+        // Convertir LBA a cadena usando sprintf
+        sprintf(starting_lba_str, "%llu", partitions[i].starting_lba);
+        sprintf(ending_lba_str, "%llu", partitions[i].ending_lba);
+
+        // Imprimir los detalles de la partición
+        printf("%-15s %-15s %-15llu %-30s %-20s\n",
+               starting_lba_str, // Inicio LBA
+               ending_lba_str,   // Final LBA
+               partitions[i].ending_lba - partitions[i].starting_lba, // Tamaño
+               partition_type_description, // Tipo de partición 
+            	partition_type); // Nombre de la partición
+
+        free(guid_str);  // Liberar la cadena generada por guid_to_str
     }
 }
 
 
+
 int is_valid_gpt_header(gpt_header * hdr) {
-    if (strncmp(hdr->signature, "EFI PART", 8) != 0) {//Si la firma no indica que sea UEFI entonces no es valida la firma
+    if (strncmp(hdr->signature, "EFI PART", 8) != 0) { // Si la firma no indica que sea UEFI entonces no es válida la firma
         return 0; // Firma no válida
     }
     return 1;
 }
-
-
 
 
 char * guid_to_str(guid * buf) {
@@ -377,6 +402,7 @@ char * guid_to_str(guid * buf) {
 	return ptr;
 }
 
+
 char * gpt_decode_partition_name(char name[72]) {
 	int i;
 	char * ptr = (char * )malloc((sizeof(short) * 36) + 1);
@@ -391,24 +417,21 @@ char * gpt_decode_partition_name(char name[72]) {
 	return ptr;
 }
 
-
 int is_null_descriptor(gpt_partition_descriptor * desc) {
-	static const guid null_guid = {0};
-	//Retorna 0 si la partición es nula
+    static const guid null_guid = {0};
+    // Retorna 0 si la partición es nula
     return memcmp(&desc->partition_type_guid, &null_guid, sizeof(guid)) == 0;
 }
 
-
-
 const gpt_partition_type * get_gpt_partition_type(char * guid_str) {
     int i = 0;
-	do{
+	printf("Guid str: %S\n",guid_str);
+    // Recorre todos los tipos de partición
+    while (gpt_partition_types[i].guid != 0) {        
         if (strcmp(guid_str, gpt_partition_types[i].guid) == 0) {
-            return &gpt_partition_types[i];//Encuentra pa parte requerida de la partición
+            return &gpt_partition_types[i]; // Encuentra la partición requerida
         }
-    }while(gpt_partition_types[i+1].os!=0);
-	return &gpt_partition_types[0];//Retorna el primer elemento si no encuentra nada
+        i++; // Incrementar para continuar con el siguiente tipo de partición
+    }
+    return &gpt_partition_types[1]; // Si no encontró, retorna el primer elemento
 }
-
-
-

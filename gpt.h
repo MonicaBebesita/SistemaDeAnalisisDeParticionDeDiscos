@@ -1,19 +1,3 @@
-/**
- * @file gpt.h
- * @author 
- * Erwin Meza Vega <emezav@unicauca.edu.co>
- * Julián Alejandro Muñoz Pérez <julianalejom@unicauca.edu.co>
- * @brief Definiciones para discos inicializados con esquema GPT (GUID Partition Table).
- * 
- * Este archivo contiene las definiciones de estructuras, constantes y funciones necesarias
- * para manejar discos que utilizan el esquema de partición GPT. Incluye representaciones
- * de GUIDs, encabezados GPT y descriptores de particiones.
- * 
- * @copyright MIT License
- */
-
-#ifndef GPT_H
-#define GPT_H
 
 #include "mbr.h"
 /**
@@ -83,23 +67,23 @@ typedef struct {
  * 
  * Representa una entrada en la tabla de particiones GPT. 
  * Cada entrada describe una partición en el disco.
- */
-typedef struct {
+ */typedef struct {
     guid partition_type_guid;             ///< GUID que identifica el tipo de partición (por ejemplo, "4F68BCE3-E8CD-4A90-A3A2-3B7B05A8A98B" para una partición de datos)
     guid unique_partition_guid;           ///< GUID único para la partición (diferente para cada partición)
     unsigned long long starting_lba;      ///< LBA de inicio de la partición
     unsigned long long ending_lba;        ///< LBA final de la partición
     unsigned long long attributes;        ///< Atributos de la partición (flags, como si es de arranque o no)
-    char partition_name[72];              ///< Nombre de la partición (en formato Unicode, 72 caracteres)
+    char partition_name[72];              ///< Nombre de la partición (en formato UNICODE, 72 caracteres)
 } __attribute__((packed)) gpt_partition_descriptor;
 
 
 /**
  * @brief imprime la tabla de particiones de gpt
+ * @param hdr es la cabeza apuntadora al header del gpt
  * @param partitions vector que describe los elementos importantes del descriptor de particiones de gpt
  * @param num_paritions es el numero de particiones de gpt encontradas
  */
-void print_gpt_partition_table(gpt_partition_descriptor partitions[], int num_partitions);
+void print_gpt_partition_table(gpt_header *hdr, gpt_partition_descriptor partitions[], int num_partitions);
 
 
 /**
@@ -182,5 +166,3 @@ int is_null_descriptor(gpt_partition_descriptor *desc);
  * @return Puntero a una nueva cadena con la representación textual del GUID.
  */
 char *guid_to_str(guid *buf);
-
-#endif

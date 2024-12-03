@@ -152,8 +152,7 @@ int main(int argc, char *argv[]) {
 				memcpy(&desc, buffer, sizeof(gpt_partition_descriptor));
 
                 if (is_null_descriptor(&desc)) {
-                    continue; // Si el descriptor es nulo, continuar con la siguiente partición
-                
+                    continue; // Si el descriptor es nulo, continuar con la siguiente partición            
 				}
 
                 // Almacenar los datos de la partición en el arreglo
@@ -165,20 +164,13 @@ int main(int argc, char *argv[]) {
             }
 
             // Imprimir la tabla de particiones si todo lo anterior es correcto para GPT
-            print_gpt_partition_table(partitions, num_entries);
+            print_gpt_partition_table(&hdr,partitions, num_entries);
 			
 		}else {
 			printf("El esquema de partición es MBR. Imprimiendo tabla de particiones MBR...\n");
 			print_mbr_partition_table(&boot_record);
 			
 		}
-		
-		
-		//5.2 Leer el segundo sector del disco(PTHDR)
-		//En el PTHDR se encuentra la cantidad de descriptores que contiene la tabla
-		//5.3 Repetir
-		//5.3.1 Leer un sector que contiene descripciones e la tabla
-		//5.3.2 Para cada descriptor leido, imprimir su información
 	}
 	return 0;
 }
