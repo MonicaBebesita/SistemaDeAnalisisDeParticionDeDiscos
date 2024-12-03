@@ -302,57 +302,56 @@ void print_gpt_partition_table(gpt_header *hdr, gpt_partition_descriptor partiti
 
     // Imprimir la partición MBR Protectiva
     printf("1               3907029167     GPT Protective MBR\n");
+    printf("------------    ------------    ------------\n");
 
-    // Imprimir detalles del encabezado GPT (hdr)
+    // Detalles del encabezado GPT
     printf("GPT header\n");
-    printf("Revision: 0x%04x\n", hdr->revision); // Imprimir la versión dinámica
-    printf("First usable lba: %llu\n", hdr->first_usable_lba); // Usar el valor dinámico
-    printf("Last usable lba: %llu\n", hdr->last_usable_lba); // Usar el valor dinámico
+    printf("Revision: 0x%04x\n", hdr->revision);
+    printf("First usable lba: %llu\n", hdr->first_usable_lba);
+    printf("Last usable lba: %llu\n", hdr->last_usable_lba);
     printf("Disk GUID: ");
-    char *disk_guid = guid_to_str(&hdr->partition_entry_type_guid); // Suponiendo que tienes una función para convertir el GUID a string
+    char *disk_guid = guid_to_str(&hdr->partition_entry_type_guid);
     printf("%s\n", disk_guid);
-    free(disk_guid); // Liberar la memoria
+    free(disk_guid);
 
-    printf("Partition entry LBA: %llu\n", hdr->partition_entries_lba); // LBA dinámico
-    printf("Number of partition entries: %d\n", hdr->num_partition_entries); // Número dinámico de entradas
-    printf("Size of a partition entry: %d\n", hdr->partition_entry_size); // Tamaño dinámico de entrada
-    printf("Total of partition table entries sectors: %d\n", hdr->num_partition_entries * hdr->partition_entry_size / 512); // Total calculado
-    printf("Size of a partition descriptor: %d\n", sizeof(gpt_partition_descriptor)); // Tamaño calculado de descriptor
+    printf("Partition entry LBA: %llu\n", hdr->partition_entries_lba);
+    printf("Number of partition entries: %d\n", hdr->num_partition_entries);
+    printf("Size of a partition entry: %d\n", hdr->partition_entry_size);
+    printf("Total of partition table entries sectors: %d\n",
+           hdr->num_partition_entries * hdr->partition_entry_size / 512);
+    printf("Size of a partition descriptor: %d\n", (int)sizeof(gpt_partition_descriptor));
     printf("\n");
 
-    // Imprimir las particiones
-    printf("Start LBA       End LBA         Size            Type                    		Partition name\n");
-    printf("------------    ------------    ------------    ---------------------------		--------------------\n");
+    // Encabezado de la tabla de particiones
+    printf("Start LBA       End LBA         Size            Type                            Partition Name\n");
+    printf("------------    ------------    ------------    ------------------------------   --------------------\n");
 
-    // Imprimir las particiones
     for (int i = 0; i < num_partitions; i++) {
+        if (is_null_descriptor(&partitions[i])) {
+            continue; // Saltar descriptores nulos
+        }
 
-        // Convertir el GUID de tipo de partición a cadena
+        // Convertir GUID de tipo de partición a string
         char *guid_str = guid_to_str(&partitions[i].partition_type_guid);
 
-        // Obtener la descripción del tipo de partición a partir del GUID
+        // Obtener la descripción del tipo de partición
         const gpt_partition_type *partition_type = get_gpt_partition_type(guid_str);
-
-        // Si no se encuentra el tipo de partición, asignar un valor por defecto
         const char *partition_type_description = partition_type ? partition_type->description : "Unknown Type";
 
-        // Convertir LBA a cadenas
-        char starting_lba_str[20]; // Array de 20 caracteres para almacenar el valor como cadena
-        char ending_lba_str[20];
+        // Decodificar el nombre de la partición
+        char *partition_name = gpt_decode_partition_name(partitions[i].partition_name);
 
-        // Convertir LBA a cadena usando sprintf
-        sprintf(starting_lba_str, "%llu", partitions[i].starting_lba);
-        sprintf(ending_lba_str, "%llu", partitions[i].ending_lba);
+        // Imprimir detalles de la partición
+        printf("%-15llu %-15llu %-15llu %-30s %s\n",
+				partitions[i].starting_lba,
+				partitions[i].ending_lba,
+				(partitions[i].ending_lba - partitions[i].starting_lba) * 512,
+				partition_type_description,
+				partition_name);
 
-        // Imprimir los detalles de la partición
-        printf("%-15s %-15s %-15llu %-30s %-20s\n",
-               starting_lba_str, // Inicio LBA
-               ending_lba_str,   // Final LBA
-               partitions[i].ending_lba - partitions[i].starting_lba, // Tamaño
-               partition_type_description, // Tipo de partición 
-            	partition_type); // Nombre de la partición
-
-        free(guid_str);  // Liberar la cadena generada por guid_to_str
+        // Liberar recursos
+        free(guid_str);
+        free(partition_name);
     }
 }
 
@@ -412,7 +411,7 @@ char * gpt_decode_partition_name(char name[72]) {
 		ptr[i] = name_ptr[i*2];
 	}
 
-	ptr[72] = 0;//Posible error al superar el limite de bytes
+	ptr[72] = 0;
 
 	return ptr;
 }
@@ -425,7 +424,6 @@ int is_null_descriptor(gpt_partition_descriptor * desc) {
 
 const gpt_partition_type * get_gpt_partition_type(char * guid_str) {
     int i = 0;
-	printf("Guid str: %S\n",guid_str);
     // Recorre todos los tipos de partición
     while (gpt_partition_types[i].guid != 0) {        
         if (strcmp(guid_str, gpt_partition_types[i].guid) == 0) {
