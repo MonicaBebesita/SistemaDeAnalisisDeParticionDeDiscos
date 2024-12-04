@@ -1,7 +1,10 @@
 /**
  * @file main.c
  * @author 
- * Erwin Meza Vega <emezav@unicauca.edu.co>
+ *
+ * @author Julian Alejandro Munoz Perez<julianalejom@unicauca.edu.co>
+ * @author Monica Alejandra Castellanos Mendez<monicacastellanos@unicauca.edu.co>
+ * @author Erwin Meza Vega <emezav@unicauca.edu.co>
  * @brief Programa para listar particiones de discos con esquemas MBR/GPT.
  * 
  * Este programa accede directamente a dispositivos de bloque y analiza

@@ -1,6 +1,8 @@
 /**
- * @file
+ * @file gpt.c
  * @author Erwin Meza Vega <emezav@unicauca.edu.co>
+ * @author Julian Alejandro Munoz Perez<julianalejom@unicauca.edu.co>
+ * @author Monica Alejandra Castellanos Mendez<monicacastellanos@unicauca.edu.co>
  * @copyright MIT License
 */
 #include <stdint.h>

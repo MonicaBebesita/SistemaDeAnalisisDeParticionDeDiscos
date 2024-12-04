@@ -1,8 +1,9 @@
 /**
  * @file mbr.h
- * @brief Definiciones para discos inicializados con esquema MBR (Master Boot Record).
- * 
- * Este archivo contiene las constantes, estructuras y prototipos de funciones 
+ * @author Erwin Meza Vega <emezav@unicauca.edu.co>
+ * @author Julian Alejandro Munoz Perez<julianalejom@unicauca.edu.co>
+ * @author Monica Alejandra Castellanos Mendez<monicacastellanos@unicauca.edu.co>
+ * @brief Este archivo contiene las constantes, estructuras y prototipos de funciones 
  * necesarias para manejar discos con el esquema de partición MBR. Incluye 
  * descriptores de particiones, la definición del MBR completo y funciones 
  * para verificar y describir particiones.

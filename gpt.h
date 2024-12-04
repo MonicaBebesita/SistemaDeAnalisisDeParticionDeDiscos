@@ -1,3 +1,10 @@
+/**
+ * @file gpt.h
+ * @author Erwin Meza Vega <emezav@unicauca.edu.co>
+ * @author Julian Alejandro Munoz Perez<julianalejom@unicauca.edu.co>
+ * @author Monica Alejandra Castellanos Mendez<monicacastellanos@unicauca.edu.co>
+ * @copyright MIT License
+*/
 
 #include "mbr.h"
 
@@ -84,7 +91,7 @@ typedef struct {
  * @brief imprime la tabla de particiones del mbr de proteccion
  * @param boot_record mbr de proteccion encontrado
  */
-void print_gpt_protective_mbr_table();
+void print_gpt_protective_mbr_table(mbr *boot_record);
 
 /**
  * @brief imprime la tabla de particiones de gpt

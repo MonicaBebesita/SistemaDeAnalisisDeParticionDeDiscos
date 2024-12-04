@@ -1,8 +1,10 @@
 /**
  * @file mbr.c
- * @brief Implementación de funciones para el manejo del Master Boot Record (MBR).
- */
-
+ * @author Erwin Meza Vega <emezav@unicauca.edu.co>
+ * @author Julian Alejandro Munoz Perez<julianalejom@unicauca.edu.co>
+ * @author Monica Alejandra Castellanos Mendez<monicacastellanos@unicauca.edu.co>
+ * @copyright MIT License
+*/
 
 #include <string.h>
 #include "mbr.h"
