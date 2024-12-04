@@ -81,7 +81,6 @@ int main(int argc, char *argv[]) {
 	// Iterar sobre los dispositivos pasados como argumentos
 	for(int i=1 ; i<argc; i++){
 		mbr boot_record; // Estructura para almacenar datos del MBR
-		gpt_header hdr;
 		disk=argv[i]; // Nombre del archivo o dispositivo actual
 		
 		printf("\nAnalizando dispositivo: %s\n", disk);
@@ -108,64 +107,50 @@ int main(int argc, char *argv[]) {
 		// 4. Si el esquema de particiones es MBR: terminar
 		// 4.1 Determinar el esquema de partición (MBR o GPT)
 		if (is_mbr(&boot_record)==2) {
-            printf("El esquema de partición es GPT. Procediendo a imprimir la tabla GPT...\n");
-
-            unsigned char buffer[SECTOR_SIZE]; // Buffer intermedio
-
-			// Leer el encabezado GPT
-			if (read_lba_sector(disk, 1, (char *)buffer) == 0) {
-				fprintf(stderr, "Error: No se pudo leer el encabezado GPT en %s\n", disk);
-				continue;
+			printf("El esquema de partición es GPT. Procediendo a imprimir la tabla GPT...\n");
+			gpt_header hdr;
+			//Validar si se puede abrir el dispositivo
+			if( read_lba_sector(disk, 1, (char*)&hdr) == 0){
+				fprintf(stderr, "No se pudo acceder al dispositivo%s\n", disk);
+				exit(EXIT_FAILURE); 
+			}
+			//Validar que sesa valido el encabezado GPT
+			if(!is_valid_gpt_header(&hdr)){
+				fprintf(stderr, "Cabecera gpt invalida\n");
+				exit(EXIT_FAILURE);
 			}
 
-			// Copiar el contenido relevante al encabezado GPT
-			memcpy(&hdr, buffer, sizeof(gpt_header));
-
-			// Validar el encabezado GPT
-			if (!is_valid_gpt_header(&hdr)) {
-				fprintf(stderr, "Advertencia: El encabezado GPT en %s no es válido.\n", disk);
-				continue;
+			// En el PTHDR se encuentra la cantidad de descriptores de la tabla
+			print_gpt_header(&hdr);
+			int num_desc = hdr.num_partition_entries;
+			int num_sect_desc = num_desc/4;
+			printf("\nStart LBA       End LBA         Size            Type                            Partition Name\n");
+    		printf("------------    ------------    ------------    ------------------------------   --------------------\n");
+			//Repetir por cada sector descriptor
+			for(int i=0;i < num_sect_desc;i++){
+				//Leer el sector
+				gpt_partition_descriptor desc[4];
+				if( read_lba_sector(disk, 2 + i, (char *)desc) == 0){
+					fprintf(stderr, "Unable to open device %s\n", disk);
+					exit(EXIT_FAILURE); 
+				}
+				//Ahora por cada descriptor imprimimos su info
+				for(int j=0; j<4; j++){
+					if(is_null_descriptor(&desc[j])){
+						continue;
+					}
+					// Imprimir los detalles de cada descriptor
+					/*printf("%15llu %15llu %15llu %35s %35s\n", 
+							desc[j].starting_lba, 
+							desc[j].ending_lba, 
+							((desc[j].ending_lba - desc[j].starting_lba) * (unsigned long long)(512)), // Tamaño en bytes
+							get_gpt_partition_type(guid_to_str(&desc[j].partition_type_guid))->description, 
+							gpt_decode_partition_name(desc[j].partition_name));
+					*/
+					print_gpt_partition_table(&desc[j]);
+				}
 			}
-
-
-            printf("Encabezado GPT válido. Analizando particiones...\n");
-
-            unsigned long long partition_entries_lba = hdr.partition_entries_lba;
-            unsigned int num_entries = hdr.num_partition_entries;
-            unsigned int entry_size = hdr.partition_entry_size;
-            printf("Tabla GPT contiene %u descriptores en LBA %llu\n", num_entries, partition_entries_lba);
-
- 			// Crear un arreglo para almacenar las particiones
-        	gpt_partition_descriptor partitions[num_entries];
-            // Iterar sobre las particiones
-            for (unsigned int i = 0; i < num_entries; i++) {
-                unsigned long long lba = partition_entries_lba + (i * entry_size) / SECTOR_SIZE;
-				// Leer descriptor de partición
-				if (read_lba_sector(disk, lba, (char *)buffer) == 0) {
-					fprintf(stderr, "Error: No se pudo leer el descriptor %u en %s\n", i, disk);
-					break;
-				}
-
-			    gpt_partition_descriptor desc;
-				
-				// Copiar datos al descriptor de partición
-				memcpy(&desc, buffer, sizeof(gpt_partition_descriptor));
-
-                if (is_null_descriptor(&desc)) {
-                    continue; // Si el descriptor es nulo, continuar con la siguiente partición            
-				}
-
-                // Almacenar los datos de la partición en el arreglo
-                partitions[i].starting_lba = desc.starting_lba;
-                partitions[i].ending_lba = desc.ending_lba;
-                partitions[i].partition_type_guid = desc.partition_type_guid;
-                // Aquí, asignas un nombre adecuado a la partición
-                snprintf(partitions[i].partition_name, sizeof(partitions[i].partition_name), "Partición %u", i + 1);
-            }
-
-            // Imprimir la tabla de particiones si todo lo anterior es correcto para GPT
-            print_gpt_partition_table(&hdr,partitions, num_entries);
-			
+			printf("------------    ------------    ------------    ------------------------------   --------------------\n");
 		}else {
 			printf("El esquema de partición es MBR. Imprimiendo tabla de particiones MBR...\n");
 			print_mbr_partition_table(&boot_record);
@@ -205,7 +190,6 @@ int read_lba_sector(char * disk, unsigned long long lba, char buf[SECTOR_SIZE]) 
 
 	fclose(fp);
 	return 1;  // Lectura exitosa
-		//return 0;
 
 
 }

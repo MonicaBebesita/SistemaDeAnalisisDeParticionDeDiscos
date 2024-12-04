@@ -294,74 +294,36 @@ int is_protective_mbr(mbr * boot_record) {
 #include <stdio.h>
 #include <stdint.h>
 // Imprime la información de las particiones en formato tabular
-void print_gpt_partition_table(gpt_header *hdr, gpt_partition_descriptor partitions[], int num_partitions) {
-    printf("Disk initialized as GPT\n");
-    printf("MBR Partition Table\n");
-    printf("Start LBA       End LBA         Type\n");
-    printf("------------    ------------    ------------\n");
+void print_gpt_header(gpt_header * hdr){
+	printf("GPT Header\n");
+	printf("Revision: 0x%x\n", hdr->revision);
+	printf("First usable lba: %d\n", hdr->first_usable_lba);
+	printf("Last usable lba: %d\n", hdr->last_usable_lba);
+	printf("Disk GUID: %s\n", guid_to_str(&hdr->disk_guid));
+	printf("Partition entry lba: %d\n", hdr->partition_entry_lba);
+	printf("Number of partition entries: %d\n", hdr->num_partition_entries);
+	printf("Size of partition entry: %d\n", hdr->size_partition_entry);
+	printf("Total of a partition descriptor: %d\n", hdr->num_partition_entries/(512/hdr->size_partition_entry));
+	printf("Size of a partition descriptor: %d\n", hdr->size_partition_entry);
+}
 
-    // Imprimir la partición MBR Protectiva
-    printf("1               3907029167     GPT Protective MBR\n");
-    printf("------------    ------------    ------------\n");
-
-    // Detalles del encabezado GPT
-    printf("GPT header\n");
-    printf("Revision: 0x%04x\n", hdr->revision);
-    printf("First usable lba: %llu\n", hdr->first_usable_lba);
-    printf("Last usable lba: %llu\n", hdr->last_usable_lba);
-    printf("Disk GUID: ");
-    char *disk_guid = guid_to_str(&hdr->partition_entry_type_guid);
-    printf("%s\n", disk_guid);
-    free(disk_guid);
-
-    printf("Partition entry LBA: %llu\n", hdr->partition_entries_lba);
-    printf("Number of partition entries: %d\n", hdr->num_partition_entries);
-    printf("Size of a partition entry: %d\n", hdr->partition_entry_size);
-    printf("Total of partition table entries sectors: %d\n",
-           hdr->num_partition_entries * hdr->partition_entry_size / 512);
-    printf("Size of a partition descriptor: %d\n", (int)sizeof(gpt_partition_descriptor));
-    printf("\n");
-
-    // Encabezado de la tabla de particiones
-    printf("Start LBA       End LBA         Size            Type                            Partition Name\n");
-    printf("------------    ------------    ------------    ------------------------------   --------------------\n");
-
-    for (int i = 0; i < num_partitions; i++) {
-        if (is_null_descriptor(&partitions[i])) {
-            continue; // Saltar descriptores nulos
-        }
-
-        // Convertir GUID de tipo de partición a string
-        char *guid_str = guid_to_str(&partitions[i].partition_type_guid);
-
-        // Obtener la descripción del tipo de partición
-        const gpt_partition_type *partition_type = get_gpt_partition_type(guid_str);
-        const char *partition_type_description = partition_type ? partition_type->description : "Unknown Type";
-
-        // Decodificar el nombre de la partición
-        char *partition_name = gpt_decode_partition_name(partitions[i].partition_name);
-
-        // Imprimir detalles de la partición
-        printf("%-15llu %-15llu %-15llu %-30s %s\n",
-				partitions[i].starting_lba,
-				partitions[i].ending_lba,
-				(partitions[i].ending_lba - partitions[i].starting_lba) * 512,
-				partition_type_description,
-				partition_name);
-
-        // Liberar recursos
-        free(guid_str);
-        free(partition_name);
-    }
+void print_gpt_partition_table(gpt_partition_descriptor *partition) {
+	printf("%15llu %15llu %15llu %35s %35s\n", 
+							partition->starting_lba, 
+							partition->ending_lba, 
+							((partition->ending_lba - partition->starting_lba) * (unsigned long long)(512)), // Tamaño en bytes
+							get_gpt_partition_type(guid_to_str(&partition->partition_type_guid))->description, 
+							gpt_decode_partition_name(partition->partition_name));
+					
 }
 
 
 
 int is_valid_gpt_header(gpt_header * hdr) {
-    if (strncmp(hdr->signature, "EFI PART", 8) != 0) { // Si la firma no indica que sea UEFI entonces no es válida la firma
-        return 0; // Firma no válida
-    }
-    return 1;
+	if( hdr->signature == GPT_HEADER_SIGNATURE){
+		return 1;
+	}
+	return 0;
 }
 
 
