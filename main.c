@@ -131,7 +131,7 @@ int main(int argc, char *argv[]) {
 				//Leer el sector
 				gpt_partition_descriptor desc[4];
 				if( read_lba_sector(disk, 2 + i, (char *)desc) == 0){
-					fprintf(stderr, "Unable to open device %s\n", disk);
+					fprintf(stderr, "No se puede acceder al dispositivo%s\n", disk);
 					exit(EXIT_FAILURE); 
 				}
 				//Ahora por cada descriptor imprimimos su info

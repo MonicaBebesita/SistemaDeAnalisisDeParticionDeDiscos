@@ -317,6 +317,14 @@ void print_gpt_partition_table(gpt_partition_descriptor *partition) {
 					
 }
 
+void print_gpt_protective_mbr_table(mbr *boot_record){
+	if(is_protective_mbr(&boot_record)){
+		printf("  	GPT Protective MBR\n");
+    	printf("------------------------------------\n");
+		print_mbr_partition_table(&boot_record);
+	}
+	printf("No tiene mbr de protección, error!!");
+}
 
 
 int is_valid_gpt_header(gpt_header * hdr) {
