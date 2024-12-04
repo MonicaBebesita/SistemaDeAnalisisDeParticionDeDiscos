@@ -93,6 +93,9 @@ int main(int argc, char *argv[]) {
 
 		// Imprimir el contenido del primer sector en formato hexadecimal
 		printf("Contenido del primer sector del disco:%s:\n", disk);
+		if(is_mbr(&boot_record)==2){
+			print_gpt_protective_mbr_table();
+		}
 		hex_dump((char*)&boot_record, sizeof(mbr));
 		//PRE: se pudo leer el primer sector del disco
 		//3.Imprimir la tabla de particiones MBR leido
@@ -102,12 +105,13 @@ int main(int argc, char *argv[]) {
 			fprintf(stderr, "Advertencia: El sector de arranque del dispositivo %s no contiene una firma válida.\n", disk);
 			continue; // Saltar al siguiente dispositivo
 		}
-		printf("La firma del MBR es válida. Analizando el disco...\n");
+		printf("La firma del MBR es valida. Analizando el disco...\n");
 
 		// 4. Si el esquema de particiones es MBR: terminar
 		// 4.1 Determinar el esquema de partición (MBR o GPT)
-		if (is_mbr(&boot_record)==2) {
+		if(is_mbr(&boot_record)==2) {
 			printf("El esquema de particion es GPT con mbr de proteccion. Procediendo a imprimir la tabla GPT...\n");
+			print_gpt_protective_mbr_table(&boot_record);
 			gpt_header hdr;
 			//Validar si se puede abrir el dispositivo
 			if( read_lba_sector(disk, 1, (char*)&hdr) == 0){

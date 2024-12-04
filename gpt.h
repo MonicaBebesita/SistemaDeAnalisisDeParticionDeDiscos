@@ -79,6 +79,13 @@ typedef struct {
     unsigned char partition_name[72];  // Nombre de la partición
     // Reservado 0 bytes
 } __attribute__((packed)) gpt_partition_descriptor;
+
+/**
+ * @brief imprime la tabla de particiones del mbr de proteccion
+ * @param boot_record mbr de proteccion encontrado
+ */
+void print_gpt_protective_mbr_table();
+
 /**
  * @brief imprime la tabla de particiones de gpt
  * @param partition variable que describe los elementos importantes del descriptor de particiones de gpt

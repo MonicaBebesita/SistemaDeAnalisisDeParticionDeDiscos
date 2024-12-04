@@ -3,10 +3,11 @@
  * @author Erwin Meza Vega <emezav@unicauca.edu.co>
  * @copyright MIT License
 */
-
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "mbr.h"
 #include "gpt.h"
 
 const gpt_partition_type gpt_partition_types[] = {
@@ -291,8 +292,7 @@ int is_protective_mbr(mbr * boot_record) {
 	return 0;
 }
 */
-#include <stdio.h>
-#include <stdint.h>
+
 // Imprime la información de las particiones en formato tabular
 void print_gpt_header(gpt_header * hdr){
 	printf("GPT Header\n");
@@ -317,13 +317,9 @@ void print_gpt_partition_table(gpt_partition_descriptor *partition) {
 					
 }
 
-void print_gpt_protective_mbr_table(mbr *boot_record){
-	if(is_protective_mbr(&boot_record)){
-		printf("  	GPT Protective MBR\n");
-    	printf("------------------------------------\n");
-		print_mbr_partition_table(&boot_record);
-	}
-	printf("No tiene mbr de protección, error!!");
+void print_gpt_protective_mbr_table(){
+	printf("  	GPT Protective MBR\n");
+    printf("------------------------------------\n");
 }
 
 
