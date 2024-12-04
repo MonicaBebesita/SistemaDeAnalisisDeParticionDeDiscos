@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
 		// 4. Si el esquema de particiones es MBR: terminar
 		// 4.1 Determinar el esquema de partición (MBR o GPT)
 		if (is_mbr(&boot_record)==2) {
-			printf("El esquema de partición es GPT. Procediendo a imprimir la tabla GPT...\n");
+			printf("El esquema de particion es GPT con mbr de proteccion. Procediendo a imprimir la tabla GPT...\n");
 			gpt_header hdr;
 			//Validar si se puede abrir el dispositivo
 			if( read_lba_sector(disk, 1, (char*)&hdr) == 0){
@@ -131,7 +131,7 @@ int main(int argc, char *argv[]) {
 				//Leer el sector
 				gpt_partition_descriptor desc[4];
 				if( read_lba_sector(disk, 2 + i, (char *)desc) == 0){
-					fprintf(stderr, "No se puede acceder al dispositivo%s\n", disk);
+					fprintf(stderr, "No se puede acceder al dispotivo %s\n", disk);
 					exit(EXIT_FAILURE); 
 				}
 				//Ahora por cada descriptor imprimimos su info
