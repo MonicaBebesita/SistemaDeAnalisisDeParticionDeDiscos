@@ -93,9 +93,6 @@ int main(int argc, char *argv[]) {
 
 		// Imprimir el contenido del primer sector en formato hexadecimal
 		printf("Contenido del primer sector del disco:%s:\n", disk);
-		if(is_mbr(&boot_record)==2){
-			print_gpt_protective_mbr_table();
-		}
 		hex_dump((char*)&boot_record, sizeof(mbr));
 		//PRE: se pudo leer el primer sector del disco
 		//3.Imprimir la tabla de particiones MBR leido
@@ -111,7 +108,7 @@ int main(int argc, char *argv[]) {
 		// 4.1 Determinar el esquema de partición (MBR o GPT)
 		if(is_mbr(&boot_record)==2) {
 			printf("El esquema de particion es GPT con mbr de proteccion. Procediendo a imprimir la tabla GPT...\n");
-			print_gpt_protective_mbr_table(&boot_record);
+			
 			gpt_header hdr;
 			//Validar si se puede abrir el dispositivo
 			if( read_lba_sector(disk, 1, (char*)&hdr) == 0){
@@ -123,7 +120,8 @@ int main(int argc, char *argv[]) {
 				fprintf(stderr, "Cabecera gpt invalida\n");
 				exit(EXIT_FAILURE);
 			}
-
+			//Imprime la tabla de mbr de protección
+			print_gpt_protective_mbr_table(&boot_record);
 			// En el PTHDR se encuentra la cantidad de descriptores de la tabla
 			print_gpt_header(&hdr);
 			int num_desc = hdr.num_partition_entries;

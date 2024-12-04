@@ -317,9 +317,11 @@ void print_gpt_partition_table(gpt_partition_descriptor *partition) {
 					
 }
 
-void print_gpt_protective_mbr_table(){
-	printf("  	GPT Protective MBR\n");
-    printf("------------------------------------\n");
+void print_gpt_protective_mbr_table(mbr *boot_record){
+	printf("---------------------------------------------------------------------------------------------------------------------\n");
+	printf("					GPT Protective MBR								 										\n");
+    printf("---------------------------------------------------------------------------------------------------------------------\n");
+    print_mbr_partition_table(boot_record);
 }
 
 
